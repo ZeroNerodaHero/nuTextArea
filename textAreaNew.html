@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+    <style>
+        /*UNIMPORTANT STYLES*/
+        #doNOTcopy{
+            text-align:center;
+            margin-top: 5%;
+        }
+        #titEXAMPLE{
+            font-size: 1.5rem; 
+        }
+    </style>
+    <style>
+        :root{
+            --textBkgColor: #ffe1fc;
+            --textHoverBkgColor: #ea82df;
+
+            --buttonBkgColor: #ffe1fc;
+            --buttonHoverBkgColor: #ea82df;
+            --buttonPadding: 1px 3px 1px 3px;
+        }
+
+        /* TEXT EDITOR STYLE*/
+        #newTextEditor{
+            display: grid;
+            grid-template-columns: auto;
+        }
+        #textButtonButtonCont{
+            display: flex;
+            justify-content: center;
+        }
+        #textButtonCont{
+            width: 50%;
+            padding-top: 5px;
+            margin-top: 3px;
+        }
+        .textButton{
+            border: 1px black dotted;
+            border-width: 1px 1px 0px 1px;
+            background-color: var(--buttonBkgColor);
+            padding: var(--buttonPadding);
+        }
+        .textButton:hover{
+            background-color: var(--buttonHoverBkgColor);
+            padding-top: 5px;
+        }
+
+        /* SUBMIT STYLE*/
+        #newTextAreaCont{
+            display: flex;
+            justify-content: center;
+        }
+        #newTextArea{
+            border: 1px black solid;
+            width: 50%;    
+            height: 125px;
+            overflow: auto;
+            word-break: break-all;
+
+            background-color: var(--textBkgColor);
+        }
+        #newTextArea:hover{
+            background-color: var(--textHoverBkgColor);
+        }
+        #newTextArea:focus{
+            background-color: var(--textHoverBkgColor);
+        }
+
+        /* SUBMIT STYLE*/
+        #submitCont{
+            display: flex;
+            justify-content: center;
+        }
+        #submitButtonCont{
+            width: 50%;
+            display: flex;
+            justify-content: end;
+        }
+        #submitButton{
+            width: fit-content;
+            border: 1px black dotted;
+            border-width: 0px 1px 1px 1px;
+            background-color: var(--buttonBkgColor);
+            padding: var(--buttonPadding);
+        }
+        #submitButton:hover{
+            background-color: var(--buttonHoverBkgColor);
+            padding-bottom:5px;
+        }
+    </style>
+    <body>
+        <div id=doNOTcopy>
+        <div id=titEXAMPLE>nuTEXTAREA EXAMPLE</div>
+        <img src=https://pbs.twimg.com/media/FX2Sh6LUIAE4gkt?format=jpg&name=large 
+            style="width:50%">
+        </div>
+        
+        <div id=newTextEditor>
+            <div id=textButtonButtonCont>
+                <div id=textButtonCont>
+                    <span class=textButton onclick=addIMG()>
+                        ADD IMG
+                    </span>
+                    <span class=textButton onclick=addLNK()>
+                        ADD LNK
+                    </span>
+                    <span class=textButton onclick=addYTB()>
+                        ADD YTB
+                    </span>
+                    <span class=textButton onclick=addVIDEO()>
+                        ADD VIDEO
+                    </span>
+                </div>
+            </div>
+            <div id=newTextAreaCont>
+                <div contenteditable="true" id=newTextArea>1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 </div>
+            </div>
+            <div id=submitCont>
+                <div id=submitButtonCont>
+                    <div id=submitButton>Submit </button>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        var newTextAreaEle = document.getElementById("newTextArea");
+        var caretIndex= 0;
+        var caretRange= null;
+
+        newTextAreaEle.addEventListener('keyup',function(event){
+            updateKeyIndex(newTextAreaEle);
+/*
+console.log("KEYUP POSITION "+caretIndex);
+console.log(caretRange);
+*/
+        });
+        newTextAreaEle.addEventListener('click',function(event){
+            updateClickIndex(event);
+/*
+console.log("CLICK POSITION "+caretIndex);
+console.log(caretRange);
+*/
+            newTextAreaEle.normalize();
+        });
+    
+        function updateClickIndex(e){
+            var offset = null;
+            var textNode =null;
+            var range =null;
+            if(document.caretRangeFromPoint){
+                range = document.caretRangeFromPoint(e.clientX,e.clientY);
+                textNode = range.startContainer;
+                offset = range.startOffset;
+            } else{
+                range = document.caretPositionFromPoint(e.clientX,e.clientY);
+                textNode = range.offsetNode;
+                offset = range.offset;
+            }
+            if(offset == null) return;
+            caretIndex = offset;
+            caretRange= range; 
+        }
+        /*credit to code konstatin munster*/
+        function updateKeyIndex(element){
+            var position = -1;
+            var selection = window.getSelection();
+            var preRange =null;
+            if(selection.rangeCount !== 0){
+                var range = selection.getRangeAt(0);
+                preRange= range.cloneRange();
+                preRange.selectNodeContents(element);
+                preRange.setEnd(range.endContainer,range.endOffset);
+                position = preRange.toString().length;
+            }
+            caretIndex = position;
+            caretRange = preRange;
+        }
+        
+        var submitButton = document.getElementById("submitButton");
+        submitButton.addEventListener("click",function(){
+            console.log(newTextAreaEle.innerText);
+            //console.log(standardizeText(newTextAreaEle.innerHTML));
+        });
+        function addIMG(){
+            insertText(caretRange,caretIndex,"[IMG]");
+        }
+        function addLNK(){}
+        function addYTB(){}
+        function addVIDEO(){}
+        function insertText(range,offset,text){
+console.log("--------");
+console.log(range);
+console.log(offset);
+            if(range == null) return;
+            //for chrome
+            var textNode = range.startContainer;
+            if(textNode == null){
+                //for firefox on caretPosition
+                textNode = range.offsetNode;
+            }
+            var [newNode,newOffset] = extractPosition(textNode,offset);
+//console.log(newNode);
+//console.log(newOffset);
+            //var rightEle = textNode.splitText(offset);
+            var rightEle = newNode.splitText(newOffset);
+            /*
+            var toBeReplace = document.createElement("span");
+            toBeReplace.innerHTML="<i>*insert link*</i>";
+
+            var insertText=document.createElement("span");
+            insertText.appendChild(document.createTextNode(" "+text));
+            insertText.appendChild(toBeReplace);
+            insertText.appendChild(document.createTextNode(")"));
+            textNode.parentNode.insertBefore(insertText,rightEle);
+            textNode.parentNode.normalize();
+            */
+            var insertText=document.createElement("span");
+            insertText.innerHTML=" "+text+"(<i>*insert link*</i>) ";
+
+            newNode.parentNode.insertBefore(insertText,rightEle);
+            newNode.parentNode.normalize();
+        }
+        //this function is needed to insert things in between nodes. depending on 
+        //the browser, firefox/chrome may choose to insert an extra div or element
+        //rather than just being an element with a textNode. we iterate until we 
+        //hit the textNode. Hopefully, textNodes do no include other textNodes.
+        function extractPosition(node,offset){
+console.log("EXTRACTPOSITION");
+console.log("OFFSET "+offset);
+console.log(node);
+            if(!node) return NULL;
+            if(node.nodeType == 3) {
+                return [node,offset];
+            }
+
+            var allChildren = node.childNodes;
+            var i = 0;
+            for(var i =0;i < allChildren.length; i++){
+                var tmp = allChildren[i];
+                var nodeLength = 9999999;
+                if(tmp.nodeType == 1){
+                    nodeLength = tmp.innerText.length; 
+                } else{
+                    nodeLength = tmp.length; 
+                }
+console.log("LENGTH OF "+nodeLength);
+                if(nodeLength < offset) offset -= nodeLength;
+                else return extractPosition(tmp,offset);
+            }
+            //default case
+            return [node,offset];
+        }
+        function standardizeText(text){
+            var ret = text.replaceAll("<br>","");
+            ret = ret.replaceAll("<div>","");
+            ret = ret.replaceAll("</div>","\n");
+            return ret;
+        }
+    </script>
+</html>
