@@ -56,8 +56,10 @@
             height: 125px;
             overflow: auto;
             word-break: break-all;
+            padding: 3px;
 
             background-color: var(--textBkgColor);
+
         }
         #newTextArea:hover{
             background-color: var(--textHoverBkgColor);
@@ -74,7 +76,7 @@
         #submitButtonCont{
             width: 50%;
             display: flex;
-            justify-content: end;
+            justify-content: flex-end;
         }
         #submitButton{
             width: fit-content;
@@ -130,17 +132,17 @@
 
         newTextAreaEle.addEventListener('keyup',function(event){
             updateKeyIndex(newTextAreaEle);
-/*
+if(0){
 console.log("KEYUP POSITION "+caretIndex);
 console.log(caretRange);
-*/
+}
         });
         newTextAreaEle.addEventListener('click',function(event){
             updateClickIndex(event);
-/*
+if(0){
 console.log("CLICK POSITION "+caretIndex);
 console.log(caretRange);
-*/
+}
             newTextAreaEle.normalize();
         });
     
@@ -185,13 +187,23 @@ console.log(caretRange);
         function addIMG(){
             insertText(caretRange,caretIndex,"[IMG]");
         }
-        function addLNK(){}
-        function addYTB(){}
-        function addVIDEO(){}
+        function addLNK(){
+            insertText(caretRange,caretIndex,"[LNK]");
+        }
+        function addYTB(){
+            insertText(caretRange,caretIndex,"[YTB]");
+        }
+        function addVIDEO(){
+            insertText(caretRange,caretIndex,"[VIDEO]");
+        }
+
         function insertText(range,offset,text){
+console.log(text);
+if(0){
 console.log("--------");
 console.log(range);
 console.log(offset);
+}
             if(range == null) return;
             //for chrome
             var textNode = range.startContainer;
@@ -203,7 +215,69 @@ console.log(offset);
 //console.log(newNode);
 //console.log(newOffset);
             //var rightEle = textNode.splitText(offset);
-            var rightEle = newNode.splitText(newOffset);
+            var insertText=document.createElement("span");
+            //insertText.innerHTML=" "+text+"(<i>*insert link*</i>) "+Math.random();
+            insertText.innerHTML=" "+text+"(<i>*insert link*</i>) ";
+
+            if(newNode.nodeType == 3){
+                //returns a text node
+                var rightEle = newNode.splitText(newOffset);
+                newNode.parentNode.insertBefore(insertText,rightEle);
+            } else{
+                //returns a node that is empty(mainly for newlines)
+                newNode.insertBefore(insertText,newNode.firstChild);
+            }
+            newNode.parentNode.normalize();
+        }
+        //this function is needed to insert things in between nodes. depending on 
+        //the browser, firefox/chrome may choose to insert an extra div or element
+        //rather than just being an element with a textNode. we iterate until we 
+        //hit the textNode. Hopefully, textNodes do no include other textNodes.
+        function extractPosition(node,offset){
+if(1){
+console.log("EXTRACTPOSITION");
+console.log("OFFSET "+offset);
+console.log(node);
+console.log(node.childNodes);
+}
+            if(!node) return NULL;
+            if(node.nodeType == 3) {
+                return [node,offset];
+            }
+
+            var allChildren = node.childNodes;
+            var i = 0;
+            for(var i =0; offset != 0 && i < allChildren.length; i++){
+                var tmp = allChildren[i];
+                var nodeLength = 9999999;
+                if(tmp.nodeType == 1){
+                    nodeLength = tmp.innerText.length; 
+                } else{
+                    nodeLength = tmp.length; 
+                }
+if(1){
+console.log("LENGTH OF "+nodeLength);
+}
+                if(nodeLength <= offset) offset -= nodeLength;
+                else return extractPosition(tmp,offset);
+            }
+            //default case
+if(1){
+console.log("RETURNS");
+console.log(node);
+console.log(offset);
+}
+            return [node,offset];
+        }
+        function standardizeText(text){
+            var ret = text.replaceAll("<br>","");
+            ret = ret.replaceAll("<div>","");
+            ret = ret.replaceAll("</div>","\n");
+            return ret;
+        }
+        function replaceView(){
+            
+        }
             /*
             var toBeReplace = document.createElement("span");
             toBeReplace.innerHTML="<i>*insert link*</i>";
@@ -215,47 +289,5 @@ console.log(offset);
             textNode.parentNode.insertBefore(insertText,rightEle);
             textNode.parentNode.normalize();
             */
-            var insertText=document.createElement("span");
-            insertText.innerHTML=" "+text+"(<i>*insert link*</i>) ";
-
-            newNode.parentNode.insertBefore(insertText,rightEle);
-            newNode.parentNode.normalize();
-        }
-        //this function is needed to insert things in between nodes. depending on 
-        //the browser, firefox/chrome may choose to insert an extra div or element
-        //rather than just being an element with a textNode. we iterate until we 
-        //hit the textNode. Hopefully, textNodes do no include other textNodes.
-        function extractPosition(node,offset){
-console.log("EXTRACTPOSITION");
-console.log("OFFSET "+offset);
-console.log(node);
-            if(!node) return NULL;
-            if(node.nodeType == 3) {
-                return [node,offset];
-            }
-
-            var allChildren = node.childNodes;
-            var i = 0;
-            for(var i =0;i < allChildren.length; i++){
-                var tmp = allChildren[i];
-                var nodeLength = 9999999;
-                if(tmp.nodeType == 1){
-                    nodeLength = tmp.innerText.length; 
-                } else{
-                    nodeLength = tmp.length; 
-                }
-console.log("LENGTH OF "+nodeLength);
-                if(nodeLength < offset) offset -= nodeLength;
-                else return extractPosition(tmp,offset);
-            }
-            //default case
-            return [node,offset];
-        }
-        function standardizeText(text){
-            var ret = text.replaceAll("<br>","");
-            ret = ret.replaceAll("<div>","");
-            ret = ret.replaceAll("</div>","\n");
-            return ret;
-        }
     </script>
 </html>
