@@ -198,12 +198,6 @@ console.log(caretRange);
         }
 
         function insertText(range,offset,text){
-console.log(text);
-if(0){
-console.log("--------");
-console.log(range);
-console.log(offset);
-}
             if(range == null) return;
             //for chrome
             var textNode = range.startContainer;
@@ -212,12 +206,16 @@ console.log(offset);
                 textNode = range.offsetNode;
             }
             var [newNode,newOffset] = extractPosition(textNode,offset);
-//console.log(newNode);
-//console.log(newOffset);
-            //var rightEle = textNode.splitText(offset);
+            var srcLnk=document.createElement("span");
+            srcLnk.innerHTML = "<i>*insert link*</i>";
+            srcLnk.addEventListener("click",function(){
+                console.log(this);
+            });
+            
             var insertText=document.createElement("span");
-            //insertText.innerHTML=" "+text+"(<i>*insert link*</i>) "+Math.random();
-            insertText.innerHTML=" "+text+"(<i>*insert link*</i>) ";
+            insertText.append(" "+text+"(");
+            insertText.appendChild(srcLnk);
+            insertText.append(") ");
 
             if(newNode.nodeType == 3){
                 //returns a text node
@@ -229,44 +227,36 @@ console.log(offset);
             }
             newNode.parentNode.normalize();
         }
+        function highlightLink(){
+            console.log("yes");
+        }
         //this function is needed to insert things in between nodes. depending on 
         //the browser, firefox/chrome may choose to insert an extra div or element
         //rather than just being an element with a textNode. we iterate until we 
         //hit the textNode. Hopefully, textNodes do no include other textNodes.
         function extractPosition(node,offset){
-if(1){
-console.log("EXTRACTPOSITION");
-console.log("OFFSET "+offset);
-console.log(node);
-console.log(node.childNodes);
-}
             if(!node) return NULL;
             if(node.nodeType == 3) {
                 return [node,offset];
             }
 
             var allChildren = node.childNodes;
-            var i = 0;
-            for(var i =0; offset != 0 && i < allChildren.length; i++){
-                var tmp = allChildren[i];
+            for(var i =0; offset != 0 && i < allChildren.length; i++,node=allChildren[i]){
+                node = allChildren[i];
                 var nodeLength = 9999999;
-                if(tmp.nodeType == 1){
-                    nodeLength = tmp.innerText.length; 
+                if(node.nodeType == 1){
+                    nodeLength = node.innerText.length; 
                 } else{
-                    nodeLength = tmp.length; 
+                    nodeLength = node.length; 
                 }
-if(1){
-console.log("LENGTH OF "+nodeLength);
-}
                 if(nodeLength <= offset) offset -= nodeLength;
-                else return extractPosition(tmp,offset);
+                else return extractPosition(node,offset);
+                //node = allChildren[i];
             }
-            //default case
-if(1){
-console.log("RETURNS");
-console.log(node);
-console.log(offset);
-}
+            //default case or if code reaches perfect element ie 
+            //they do the return return up click addimg sequence
+            //this is why we have node = allchildren[i] in the for loop above
+            //it is when offset == 0
             return [node,offset];
         }
         function standardizeText(text){
