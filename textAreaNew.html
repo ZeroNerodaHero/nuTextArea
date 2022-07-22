@@ -53,13 +53,17 @@
         #newTextArea{
             border: 1px black solid;
             width: 50%;    
-            height: 125px;
+            height: 200px;
             overflow: auto;
             word-break: break-all;
             padding: 3px;
 
             background-color: var(--textBkgColor);
 
+        }
+        #newTextArea img{
+            width: 50%;
+            display: block;
         }
         #newTextArea:hover{
             background-color: var(--textHoverBkgColor);
@@ -132,17 +136,10 @@
 
         newTextAreaEle.addEventListener('keyup',function(event){
             updateKeyIndex(newTextAreaEle);
-if(0){
-console.log("KEYUP POSITION "+caretIndex);
-console.log(caretRange);
-}
+            replaceView();
         });
         newTextAreaEle.addEventListener('click',function(event){
             updateClickIndex(event);
-if(0){
-console.log("CLICK POSITION "+caretIndex);
-console.log(caretRange);
-}
             newTextAreaEle.normalize();
         });
     
@@ -188,7 +185,7 @@ console.log(caretRange);
             insertText(caretRange,caretIndex,"[IMG]");
         }
         function addLNK(){
-            insertText(caretRange,caretIndex,"[LNK]");
+            insertText(caretRange,caretIndex,"[LNK]",0);
         }
         function addYTB(){
             insertText(caretRange,caretIndex,"[YTB]");
@@ -197,7 +194,23 @@ console.log(caretRange);
             insertText(caretRange,caretIndex,"[VIDEO]");
         }
 
-        function insertText(range,offset,text){
+        function appendText(text,lineBreak=1){
+            var srcLnk=document.createElement("span");
+            srcLnk.innerHTML = "<i>*insert link*</i>";
+            srcLnk.addEventListener("click",function(){
+                console.log(this);
+            });
+            
+            var eleType = (lineBreak ? "div" : "span");
+            var insertText=document.createElement(eleType);
+            insertText.append(" "+text+"(");
+            insertText.appendChild(srcLnk);
+            insertText.append(") ");
+
+            var newTextArea = document.getElementById("newTextArea");
+            newTextArea.appendChild(insertText);
+        }
+        function insertText(range,offset,text,lineBreak=1){
             if(range == null) return;
             //for chrome
             var textNode = range.startContainer;
@@ -212,20 +225,27 @@ console.log(caretRange);
                 console.log(this);
             });
             
-            var insertText=document.createElement("span");
+            var eleType = (lineBreak ? "div" : "span");
+            var insertText=document.createElement(eleType);
             insertText.append(" "+text+"(");
             insertText.appendChild(srcLnk);
             insertText.append(") ");
 
-            if(newNode.nodeType == 3){
-                //returns a text node
-                var rightEle = newNode.splitText(newOffset);
-                newNode.parentNode.insertBefore(insertText,rightEle);
-            } else{
-                //returns a node that is empty(mainly for newlines)
-                newNode.insertBefore(insertText,newNode.firstChild);
+            if(!newNode){
+                //this is at the end of the text area
+                textNode.appendChild(insertText);
             }
-            newNode.parentNode.normalize();
+            else{
+                if(newNode.nodeType == 3){
+                    //returns a text node
+                    var rightEle = newNode.splitText(newOffset);
+                    newNode.parentNode.insertBefore(insertText,rightEle);
+                } else{
+                    //returns a node that is empty(mainly for newlines)
+                    newNode.insertBefore(insertText,newNode.firstChild);
+                }
+                newNode.parentNode.normalize();
+            }
         }
         function highlightLink(){
             console.log("yes");
@@ -235,6 +255,7 @@ console.log(caretRange);
         //rather than just being an element with a textNode. we iterate until we 
         //hit the textNode. Hopefully, textNodes do no include other textNodes.
         function extractPosition(node,offset){
+console.log("OFFSET "+offset);
             if(!node) return NULL;
             if(node.nodeType == 3) {
                 return [node,offset];
@@ -251,7 +272,6 @@ console.log(caretRange);
                 }
                 if(nodeLength <= offset) offset -= nodeLength;
                 else return extractPosition(node,offset);
-                //node = allChildren[i];
             }
             //default case or if code reaches perfect element ie 
             //they do the return return up click addimg sequence
@@ -266,18 +286,63 @@ console.log(caretRange);
             return ret;
         }
         function replaceView(){
-            
-        }
-            /*
-            var toBeReplace = document.createElement("span");
-            toBeReplace.innerHTML="<i>*insert link*</i>";
+            var node = document.getElementById("newTextArea");
+            var oriText = newText = node.innerHTML;
 
-            var insertText=document.createElement("span");
-            insertText.appendChild(document.createTextNode(" "+text));
-            insertText.appendChild(toBeReplace);
-            insertText.appendChild(document.createTextNode(")"));
-            textNode.parentNode.insertBefore(insertText,rightEle);
-            textNode.parentNode.normalize();
-            */
+            for(var i = 0; i < oriText.length; i++){
+                //if opt-> 0 nothing
+                // 1 finding selection type
+                // done
+                var textLength = oriText.length;
+                var start = i,opt = 0;
+                var optType = "",optLink="";
+                while(i < textLength && opt != 3){
+                    if(opt ==0 && oriText[i] == "["){
+                        opt=1;
+                        start=i;
+                    }
+                    else if(opt == 1){
+                        if(oriText[i] == "]"){
+                            i++;
+                            if(i < textLength && oriText[i] == "("){
+                                opt=2;
+                            } else{
+                                opt=0;
+                                optType = optLink="";
+                            }
+                        }
+                        else optType += oriText[i];
+                    } else if(opt == 2){
+                        if(oriText[i] == ")"){
+                            opt = 3;
+                        } else{
+                            optLink += oriText[i];
+                        }
+                    }
+                    i++;
+                }
+                if(opt == 3){
+                    if(optLink != "" && optLink != "*insert link*"){
+                        var toInsert = "";
+                        if(optType == "IMG"){
+                            toInsert = "<img src='"+optLink+"'>";
+                        }
+                        if(optType == "LNK"){}
+                        if(optType == "YTB"){}
+                        if(optType == "VIDEO"){}
+
+                        if(toInsert != ""){
+                            var keepLeft = oriText.substr(0,start);
+                            var keepRight = oriText.substr(i+1);
+console.log("LEFT "+keepLeft);
+console.log("NEW "+toInsert);
+console.log("RIGHT "+keepRight);
+console.log(keepLeft+toInsert+keepRight);
+                            node.innerHTML = keepLeft+toInsert+keepRight;
+                        }
+                    }
+                }
+            }
+        }
     </script>
 </html>
