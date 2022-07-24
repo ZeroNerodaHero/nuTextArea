@@ -71,6 +71,9 @@
         #newTextArea:focus{
             background-color: var(--textHoverBkgColor);
         }
+        .insertLinkArea{
+            font-style: italic;
+        }
 
         /* SUBMIT STYLE*/
         #submitCont{
@@ -131,74 +134,34 @@
 
     <script>
         var newTextAreaEle = document.getElementById("newTextArea");
-        var caretIndex= 0;
-        var caretRange= null;
 
         newTextAreaEle.addEventListener('keyup',function(event){
-            updateKeyIndex(newTextAreaEle);
             replaceView();
+            console.log("DONE");
         });
         newTextAreaEle.addEventListener('click',function(event){
-            updateClickIndex(event);
-            newTextAreaEle.normalize();
         });
     
-        function updateClickIndex(e){
-            var offset = null;
-            var textNode =null;
-            var range =null;
-            if(document.caretRangeFromPoint){
-                range = document.caretRangeFromPoint(e.clientX,e.clientY);
-                textNode = range.startContainer;
-                offset = range.startOffset;
-            } else{
-                range = document.caretPositionFromPoint(e.clientX,e.clientY);
-                textNode = range.offsetNode;
-                offset = range.offset;
-            }
-            if(offset == null) return;
-            caretIndex = offset;
-            caretRange= range; 
-        }
-        /*credit to code konstatin munster*/
-        function updateKeyIndex(element){
-            var position = -1;
-            var selection = window.getSelection();
-            var preRange =null;
-            if(selection.rangeCount !== 0){
-                var range = selection.getRangeAt(0);
-                preRange= range.cloneRange();
-                preRange.selectNodeContents(element);
-                preRange.setEnd(range.endContainer,range.endOffset);
-                position = preRange.toString().length;
-            }
-            caretIndex = position;
-            caretRange = preRange;
-        }
-        
-        var submitButton = document.getElementById("submitButton");
-        submitButton.addEventListener("click",function(){
-            console.log(newTextAreaEle.innerText);
-            //console.log(standardizeText(newTextAreaEle.innerHTML));
-        });
         function addIMG(){
-            insertText(caretRange,caretIndex,"[IMG]");
+            appendText("[IMG]");
         }
         function addLNK(){
-            insertText(caretRange,caretIndex,"[LNK]",0);
+            appendText("[LNK]",0);
         }
         function addYTB(){
-            insertText(caretRange,caretIndex,"[YTB]");
+            appendText("[YTB]");
         }
         function addVIDEO(){
-            insertText(caretRange,caretIndex,"[VIDEO]");
+            appendText("[VIDEO]");
         }
 
         function appendText(text,lineBreak=1){
             var srcLnk=document.createElement("span");
-            srcLnk.innerHTML = "<i>*insert link*</i>";
+            srcLnk.className = "insertLinkArea";
+            srcLnk.innerHTML = "*insert link*";
             srcLnk.addEventListener("click",function(){
-                console.log(this);
+                console.log("click");
+                this.parentElement.removeChild(this);
             });
             
             var eleType = (lineBreak ? "div" : "span");
@@ -210,81 +173,10 @@
             var newTextArea = document.getElementById("newTextArea");
             newTextArea.appendChild(insertText);
         }
-        function insertText(range,offset,text,lineBreak=1){
-            if(range == null) return;
-            //for chrome
-            var textNode = range.startContainer;
-            if(textNode == null){
-                //for firefox on caretPosition
-                textNode = range.offsetNode;
-            }
-            var [newNode,newOffset] = extractPosition(textNode,offset);
-            var srcLnk=document.createElement("span");
-            srcLnk.innerHTML = "<i>*insert link*</i>";
-            srcLnk.addEventListener("click",function(){
-                console.log(this);
-            });
-            
-            var eleType = (lineBreak ? "div" : "span");
-            var insertText=document.createElement(eleType);
-            insertText.append(" "+text+"(");
-            insertText.appendChild(srcLnk);
-            insertText.append(") ");
-
-            if(!newNode){
-                //this is at the end of the text area
-                textNode.appendChild(insertText);
-            }
-            else{
-                if(newNode.nodeType == 3){
-                    //returns a text node
-                    var rightEle = newNode.splitText(newOffset);
-                    newNode.parentNode.insertBefore(insertText,rightEle);
-                } else{
-                    //returns a node that is empty(mainly for newlines)
-                    newNode.insertBefore(insertText,newNode.firstChild);
-                }
-                newNode.parentNode.normalize();
-            }
-        }
         function highlightLink(){
             console.log("yes");
         }
-        //this function is needed to insert things in between nodes. depending on 
-        //the browser, firefox/chrome may choose to insert an extra div or element
-        //rather than just being an element with a textNode. we iterate until we 
-        //hit the textNode. Hopefully, textNodes do no include other textNodes.
-        function extractPosition(node,offset){
-console.log("OFFSET "+offset);
-            if(!node) return NULL;
-            if(node.nodeType == 3) {
-                return [node,offset];
-            }
 
-            var allChildren = node.childNodes;
-            for(var i =0; offset != 0 && i < allChildren.length; i++,node=allChildren[i]){
-                node = allChildren[i];
-                var nodeLength = 9999999;
-                if(node.nodeType == 1){
-                    nodeLength = node.innerText.length; 
-                } else{
-                    nodeLength = node.length; 
-                }
-                if(nodeLength <= offset) offset -= nodeLength;
-                else return extractPosition(node,offset);
-            }
-            //default case or if code reaches perfect element ie 
-            //they do the return return up click addimg sequence
-            //this is why we have node = allchildren[i] in the for loop above
-            //it is when offset == 0
-            return [node,offset];
-        }
-        function standardizeText(text){
-            var ret = text.replaceAll("<br>","");
-            ret = ret.replaceAll("<div>","");
-            ret = ret.replaceAll("</div>","\n");
-            return ret;
-        }
         function replaceView(){
             var node = document.getElementById("newTextArea");
             var oriText = newText = node.innerHTML;
@@ -321,23 +213,72 @@ console.log("OFFSET "+offset);
                     }
                     i++;
                 }
+console.log(optLink);
                 if(opt == 3){
-                    if(optLink != "" && optLink != "*insert link*"){
+                    if(optLink != "" && optLink[0] != "<"){
                         var toInsert = "";
                         if(optType == "IMG"){
                             toInsert = "<img src='"+optLink+"'>";
                         }
-                        if(optType == "LNK"){}
-                        if(optType == "YTB"){}
-                        if(optType == "VIDEO"){}
+                        if(optType == "LNK"){
+                            toInsert = "<a href='"+optLink+"'>"+optLink+"</a>";
+                        }
+                        if(optType == "YTB"){
+                            var youtubeID="";
+                            var j = optLink.length-1;
+                            while(j >= 0 && optLink[j] != "/"){
+                                var tmpId= "";
+                                while(j >= 0 && optLink[j] != "/" && optLink !="&" && optLink[j] != "="){
+                                    tmpId= optLink[j]+tmpId;
+                                    j--;
+                                }
+                                if(optLink[j] == "/"){
+                                    youtubeID = tmpId;
+                                    break;
+                                } else if(optLink[j] == "="){
+                                    j--;
+                                    var GEType="";
+                                    while(j >= 0 && optLink[j] != "&" && optLink[j] != "?"){
+                                        GEType = optLink[j]+GEType;
+                                        j--;
+                                    }
+                                    if(GEType == "v"){
+                                        youtubeID = tmpId;
+                                        break;
+                                    } else{
+                                        j--;
+                                    }
+                                }
+                            }
+                            toInsert = "<div><iframe width='50%' src='"+
+                                "https://www.youtube.com/embed/"+youtubeID+"'"+
+                                "</iframe></div>";
+                        }
+                        if(optType == "VIDEO"){
+                            var videoType="";
+                            var j = optLink.length-1;
+                            while(optLink[j] != "."){
+                                videoType = optLink[j]+videoType;
+                                j--;
+                            }
+                            if(videoType == "webm" || videoType=="mp4" || videoType=="ogg"){
+                                toInsert = "<video width='50%' controls>"+
+                                    "<source src='"+optLink+"' type='video/"+videoType+
+                                    "'>You Can't Play Video on this Browser</video><br>"+
+                                    "<a href='"+optLink+"'>"+optLink+"</a>";
+                            }
+                        }
+//console.log(toInsert);
 
                         if(toInsert != ""){
                             var keepLeft = oriText.substr(0,start);
-                            var keepRight = oriText.substr(i+1);
+                            var keepRight = oriText.substr(i)+"&nbsp";
+/*
 console.log("LEFT "+keepLeft);
 console.log("NEW "+toInsert);
 console.log("RIGHT "+keepRight);
 console.log(keepLeft+toInsert+keepRight);
+*/
                             node.innerHTML = keepLeft+toInsert+keepRight;
                         }
                     }
