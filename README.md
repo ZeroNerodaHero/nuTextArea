@@ -1,7 +1,7 @@
 # nuTextArea
 I think the default html textarea is a little lack luster, here is my attempt at making a more integrated text area for my purposes. 
 This text area supports images, videos, and links in the textarea as opposed to being just raw text. It uses a div with content editable plus a few other small extensions so that is mimics that of the HTML textarea.
-![IMAGE](funcel.gif)
+![IMAGE](res/funcel.gif)
 [TRY IT HERE just an html link](https://zeronerodahero.github.io/archive/nuTextArea.html)
 
 ## Usage
