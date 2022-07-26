@@ -122,11 +122,11 @@
                 </div>
             </div>
             <div id=newTextAreaCont>
-                <div contenteditable="true" id=newTextArea>1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 </div>
+                <div contenteditable="true" id=newTextArea>1 2 3 4 5 6 7 8 9 10</div>
             </div>
             <div id=submitCont>
                 <div id=submitButtonCont>
-                    <div id=submitButton>Submit </button>
+                    <div id=submitButton onclick=submitValue()>Submit </button>
                 </div>
             </div>
         </div>
@@ -137,7 +137,6 @@
 
         newTextAreaEle.addEventListener('keyup',function(event){
             replaceView();
-            console.log("DONE");
         });
         newTextAreaEle.addEventListener('click',function(event){
         });
@@ -154,13 +153,60 @@
         function addVIDEO(){
             appendText("[VIDEO]");
         }
+        function submitValue(){
+            var textVal=extractString(newTextAreaEle);
+            console.log(textVal);
+            console.log(standardizeText(textVal));
+        }
+        function extractString(node){
+            if(!node) return "";
+            if(node.nodeType == 3){
+                return node.textContent;
+            }
+            if(node.nodeType == 1){
+                if(node.nodeName == "IMG"){
+                    return "\n[IMG]("+node.src+")\n";
+                }
+                if(node.nodeName == "A"){
+                    if(node.className == "videoLink") return "";
+                    return "[LNK]("+node.href+")";
+                }
+                if(node.nodeName == "IFRAME"){
+                    return "\n[YTB]("+node.src+")\n";
+                }
+                if(node.nodeName == "VIDEO"){
+                    return "\n[VIDEO]("+node.currentSrc+")\n";
+                }
+            }
+
+            var retStr="";
+            var nodeChildren = node.childNodes;
+            for(var childNode of nodeChildren){
+                retStr += extractString(childNode);
+            }
+            if(node.nodeName == "DIV") retStr += "\n";
+            return retStr;
+        }
+        function standardizeText(inputStr){
+            var outputStr = ""+inputStr[0];
+            var outputOffset = 1;
+            for(var i = 1; i < inputStr.length; i++){
+                if((inputStr[i] == "\n" && outputStr[outputOffset-1] == "\n") ||
+                   (inputStr[i] == " " && outputStr[outputOffset-1] == "\n") ||
+                    (inputStr[i] == " " && outputStr[outputOffset-1] == " ")){
+                        continue;
+                }
+                outputStr+=inputStr[i];
+                outputOffset++;
+            }
+            return outputStr;
+        }
 
         function appendText(text,lineBreak=1){
             var srcLnk=document.createElement("span");
             srcLnk.className = "insertLinkArea";
             srcLnk.innerHTML = "*insert link*";
             srcLnk.addEventListener("click",function(){
-                console.log("click");
                 this.parentElement.removeChild(this);
             });
             
@@ -172,9 +218,6 @@
 
             var newTextArea = document.getElementById("newTextArea");
             newTextArea.appendChild(insertText);
-        }
-        function highlightLink(){
-            console.log("yes");
         }
 
         function replaceView(){
@@ -213,17 +256,16 @@
                     }
                     i++;
                 }
-console.log(optLink);
                 if(opt == 3){
                     if(optLink != "" && optLink[0] != "<"){
                         var toInsert = "";
                         if(optType == "IMG"){
-                            toInsert = "<img src='"+optLink+"'>";
+                            toInsert = "<img src='"+optLink+"'><br>";
                         }
-                        if(optType == "LNK"){
+                        else if(optType == "LNK"){
                             toInsert = "<a href='"+optLink+"'>"+optLink+"</a>";
                         }
-                        if(optType == "YTB"){
+                        else if(optType == "YTB"){
                             var youtubeID="";
                             var j = optLink.length-1;
                             while(j >= 0 && optLink[j] != "/"){
@@ -254,7 +296,7 @@ console.log(optLink);
                                 "https://www.youtube.com/embed/"+youtubeID+"'"+
                                 "</iframe></div>";
                         }
-                        if(optType == "VIDEO"){
+                        else if(optType == "VIDEO"){
                             var videoType="";
                             var j = optLink.length-1;
                             while(optLink[j] != "."){
@@ -265,20 +307,15 @@ console.log(optLink);
                                 toInsert = "<video width='50%' controls>"+
                                     "<source src='"+optLink+"' type='video/"+videoType+
                                     "'>You Can't Play Video on this Browser</video><br>"+
-                                    "<a href='"+optLink+"'>"+optLink+"</a>";
+                                    "<div><a class=videoLink href='"+optLink+"'>"+
+                                    optLink+"</a></div>"+
+                                    "<br>";
                             }
                         }
-//console.log(toInsert);
 
                         if(toInsert != ""){
                             var keepLeft = oriText.substr(0,start);
-                            var keepRight = oriText.substr(i)+"&nbsp";
-/*
-console.log("LEFT "+keepLeft);
-console.log("NEW "+toInsert);
-console.log("RIGHT "+keepRight);
-console.log(keepLeft+toInsert+keepRight);
-*/
+                            var keepRight = oriText.substr(i);
                             node.innerHTML = keepLeft+toInsert+keepRight;
                         }
                     }
