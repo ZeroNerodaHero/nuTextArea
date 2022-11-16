@@ -20,3 +20,5 @@ To
 
 ## Problems
 * The newline problem: Images need a newline below them so that the users can scroll and append text past the images. If you do not have a newline there, HTML makes the image the last child and you cannot add text to the end. This is content-editable's short comming. There is a solution, but I just haven't figured it out yet. For now, this works ok. And I want to get something out. This is also why we need selector. \[To be solved]
+
+The real version on funcel.xyz has an implementation for using AJAX for connections to a server for something like an emote grabber. Plenty of other implementations.
